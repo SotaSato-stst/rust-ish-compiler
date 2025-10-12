@@ -1,0 +1,19 @@
+syntax = Fn | Const;
+
+Fn = "fn", Identifiler, Signature, Block, [ "->", Type ];
+Argument = Identifiler, ":", Type;
+Signature = "(", [Argument, { ",", Argument }], ")";
+
+Block = "{", { Statement }, "}";
+Statement = Let | Expr;
+Let = "let", Identifiler, ":", Type, "=", Expr, ";";
+Const = "const", Identifiler, ":", Type, "=", Expr, ";";
+
+Expr = Number | Identifiler;
+
+Identifiler = Letter, [{ Letter | Digit | "_" }];
+Number = Digit, { Digit };
+Type = "i32" | "f64";
+
+Letter = "a"-"z" | "A"-"Z";
+Digit = "0"-"9";

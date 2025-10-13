@@ -1,4 +1,5 @@
 mod lexer;
+mod libs;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -8,5 +9,6 @@ fn main() {
     }
 
     let filename = &args[1];
-    lexer::ast_builder::build_ast(filename);
+    let source_code = libs::readfile(filename);
+    lexer::ast_builder::build_ast(source_code.as_str());
 }

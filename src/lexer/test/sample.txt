@@ -2,4 +2,4 @@ fn main() {
     let int: i32 = 42;
 }
 
-const S: f64 = 3.14;
+const S: f64 = 1919110;

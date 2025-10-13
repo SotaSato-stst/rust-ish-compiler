@@ -1,3 +1,5 @@
+use core::str;
+
 use super::tokenizer;
 use super::lexer;
 
@@ -9,6 +11,60 @@ fn lex(source_string: &str) {
   let chunks = tokenizer::to_token_chunks(source_string).into_iter().peekable();
   let tokens = lexer::to_token_stream(chunks.collect());
   println!("{:?}", tokens);
+}
+
+fn parse(tokens: Vec<super::token::Token>) {
+// TODO: implement parsing logic here
+}
+
+enum Item {
+  ItemFn(ItemFn),
+  ItemConst(ItemConst),
+}
+
+struct ItemFn {
+  signature: FnSignature,
+  block: Vec<Statement>,
+}
+
+enum Statement {
+  Local(Local)
+}
+
+struct Local {
+  name: String,
+  var_type: String,
+  value: Expr,
+}
+
+enum Expr {
+  ExprLit(String),
+  ExprBinaryOp {
+    left: Box<Expr>,
+    op: String,
+    right: Box<Expr>,
+  },
+  ExprVariable(String),
+}
+
+struct FnSignature {
+  ident: String,
+  args: Vec<FnArg>,
+  output: Option<String>,
+}
+
+struct FnArg {
+  name: String,
+  arg_type: String,
+}
+
+struct ItemConst {
+  name: String,
+  value: String,
+}
+
+pub struct Program {
+  pub items: Vec<Item>,
 }
 
 #[cfg(test)]

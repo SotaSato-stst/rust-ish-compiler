@@ -1,5 +1,6 @@
-mod lexer;
+mod parser;
 mod libs;
+mod ast;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -10,5 +11,19 @@ fn main() {
 
     let filename = &args[1];
     let source_code = libs::readfile(filename);
-    lexer::ast_builder::build_ast(source_code.as_str());
+    parser::parser::parse(&source_code);
+}
+
+#[cfg(test)]
+pub mod tests {
+    use crate::libs;
+
+    use super::*;
+    #[test]
+    fn for_test() {
+        let filename = "./src/parser/test/sample.txt";
+        let source_code = libs::readfile(filename);
+        let ast = parser::parser::parse(&source_code);
+        println!("ast: {:?}", ast);
+    }
 }

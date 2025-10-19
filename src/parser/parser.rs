@@ -1,9 +1,18 @@
+use super::lexer;
 use super::token::Token;
+use super::chunker;
+use crate::ast::program::{Program, Item, ItemFn, FnSignature, FnParams, Statement, Local, FnCall, Expr};
 
-pub fn parse(tokens: Vec<Token>) -> Program {
+pub fn parse(source_code: &String) -> Program {
+  let chunks = chunker::to_token_chunks(source_code);
+  let token_iter = lexer::to_token_stream(chunks);
+    parse_to_program(token_iter)
+}
+
+fn parse_to_program(tokens: Vec<Token>) -> Program {
   let mut token_iter = tokens.into_iter().peekable();
   let mut items = Vec::<Item>::new();
-  while (token_iter.peek() != None) {
+  while token_iter.peek() != None {
     items.push(parse_item(&mut token_iter));
   }
     Program {
@@ -195,76 +204,23 @@ fn parse_fn_params(token_iter: &mut core::iter::Peekable<impl Iterator<Item=Toke
   }
 }
 
-#[derive(Debug)]
-enum Item {
-  ItemFn(ItemFn),
-  ItemConst(ItemConst),
-}
-#[derive(Debug)]
-
-struct ItemFn {
-  signature: FnSignature,
-  block: Vec<Statement>,
-}
-
-#[derive(Debug)]
-enum Statement {
-  Local(Local),
-  FnCall(FnCall),
-}
-
-#[derive(Debug)]
-struct Local {
-  name: String,
-  var_type: String,
-  value: Expr,
-}
-
-#[derive(Debug)]
-struct FnCall {
-  name: String,
-  args: Vec<Expr>,
-}
-
-#[derive(Debug)]
-enum Expr {
-  ExprLit(String),
-  ExprBinaryOp {
-    left: Box<Expr>,
-    op: String,
-    right: Box<Expr>,
-  },
-  ExprVariable(String),
-}
-
-#[derive(Debug)]
-struct FnSignature {
-  ident: String,
-  args: Vec<FnParams>,
-  output: Option<String>,
-}
-
-#[derive(Debug)]
-struct FnParams {
-  name: String,
-  arg_type: String,
-}
-
-#[derive(Debug)]
-struct ItemConst {
-  name: String,
-  value: String,
-}
-
-#[derive(Debug)]
-pub struct Program {
-  pub items: Vec<Item>,
-}
-
 #[cfg(test)]
 mod tests {
-  use crate::lexer::token::{Token, Type};
+  use crate::parser::token::{Token, Type};
   use super::*;
+  use crate::libs;
+
+    #[test]
+    fn for_test() {
+        let filename = "./src/parser/test/sample.txt";
+        let source_code = libs::readfile(filename);
+        let chunks = chunker::to_token_chunks(source_code.as_str()).into_iter().peekable();
+        println!("chunks: {:?}", chunks.clone().collect::<Vec<String>>());
+        let tokens = lexer::to_token_stream(chunks.collect());
+        println!("tokens: {:?}", tokens);
+        let ast = parse_to_program(tokens);
+        println!("ast: {:?}", ast);
+    }
 
   #[test]
   fn test_parse() {
@@ -283,7 +239,7 @@ mod tests {
         Token::Semicolon,
         Token::RBrace,
     ];
-    let ast = parse(tokens);
+    let ast = parse_to_program(tokens);
     let expected_ast = Program {
         items: vec![
             Item::ItemFn(ItemFn {

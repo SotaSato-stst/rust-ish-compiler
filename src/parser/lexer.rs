@@ -32,14 +32,14 @@ pub fn to_token_stream(token_chunks: Vec<String>) -> Vec<Token> {
 
 #[cfg(test)]
 mod tests {
-    use crate::lexer::tokenizer;
-    use crate::lexer::token::{Token, Type};
+    use crate::parser::chunker;
+    use crate::parser::token::{Token, Type};
     use super::*;
 
     #[test]
     fn test_lex() {
     let source = "fn main() { let x: i32 = 10; }";
-    let chunks = tokenizer::to_token_chunks(source);
+    let chunks = chunker::to_token_chunks(source);
     let tokens = to_token_stream(chunks);
     let expected_tokens = vec![
         Token::Fn,

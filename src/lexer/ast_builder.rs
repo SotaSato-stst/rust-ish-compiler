@@ -20,6 +20,11 @@ pub mod tests {
     fn for_test() {
         let filename = "./src/lexer/test/sample.txt";
         let source_code = libs::readfile(filename);
-        build_ast(source_code.as_str());
+        let chunks = tokenizer::to_token_chunks(source_code.as_str()).into_iter().peekable();
+        println!("chunks: {:?}", chunks.clone().collect::<Vec<String>>());
+        let tokens = lexer::to_token_stream(chunks.collect());
+        println!("tokens: {:?}", tokens);
+        let ast = parser::parse(tokens);
+        println!("ast: {:?}", ast);
     }
 }

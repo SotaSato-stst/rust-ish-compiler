@@ -46,9 +46,66 @@ fn parse_block(token_iter: &mut core::iter::Peekable<impl Iterator<Item=Token>>)
 }
 
 fn parse_statement(token_iter: &mut core::iter::Peekable<impl Iterator<Item=Token>>) -> Statement {
-  match token_iter.peek().unwrap() {
+  match token_iter.next().unwrap() {
     Token::Let => {
-      token_iter.next();
+        parse_let_statement(token_iter)
+    },
+    Token::Identifier(indent) => {
+        let _indent = indent.clone();
+        match token_iter.peek().unwrap() {
+            Token::LParentheses => {
+                parse_fn_call_statement(token_iter, &_indent)
+            },
+            _ => panic!("Unexpected token: {:?}", token_iter.peek().unwrap()),
+        }
+    }
+    _ => panic!("Unexpected token in statement"),
+  }
+}
+
+fn parse_fn_call_statement(token_iter: &mut core::iter::Peekable<impl Iterator<Item=Token>>, ident: &String) -> Statement {
+    let args = parse_fn_arg(token_iter);
+    match token_iter.next().unwrap() {
+        Token::Semicolon => (),
+        _ => panic!("Expected ';'"),
+    };
+    Statement::FnCall(FnCall {
+        name: ident.clone(),
+        args: args,
+    })
+}
+
+fn parse_fn_arg(token_iter: &mut core::iter::Peekable<impl Iterator<Item=Token>>) -> Vec<Expr> {
+    match token_iter.next().unwrap() {
+        Token::LParentheses => (),
+        _ => panic!("Expected '(': {:?}", token_iter.peek().unwrap()),
+    };
+    let mut args = Vec::<Expr>::new();
+    while token_iter.peek() != None {
+        match token_iter.peek().unwrap() {
+            Token::RParentheses => {
+                token_iter.next();
+                break;
+            },
+            Token::Identifier(lit) => {
+                if lit.starts_with("\"") {
+                    if !lit.ends_with("\"") {
+                        panic!("Unclosed string literal: {}", lit);
+                    }
+                    let unquoted = lit.trim_matches('"').to_string();
+                    args.push(Expr::ExprLit(unquoted));
+                } else {
+                    args.push(Expr::ExprVariable(lit.clone()));
+                }
+                token_iter.next();
+            },
+            _ => panic!("Unexpected token in function arguments: {:?}", token_iter.peek().unwrap()),
+        }
+    }
+    args
+}
+
+fn parse_let_statement(token_iter: &mut core::iter::Peekable<impl Iterator<Item=Token>>) -> Statement {
       let name = match token_iter.next().unwrap() {
         Token::Identifier(name) => name,
         _ => panic!("Expected identifier"),
@@ -78,9 +135,6 @@ fn parse_statement(token_iter: &mut core::iter::Peekable<impl Iterator<Item=Toke
         var_type,
         value,
       })
-    },
-    _ => panic!("Unexpected token in statement"),
-  }
 }
 
 fn parse_fn_signature(token_iter: &mut core::iter::Peekable<impl Iterator<Item=Token>>) -> FnSignature {
@@ -92,14 +146,14 @@ fn parse_fn_signature(token_iter: &mut core::iter::Peekable<impl Iterator<Item=T
     Token::LParentheses => (),
     _ => panic!("Expected '('"),
   };
-  let mut args = Vec::<FnArg>::new();
+  let mut args = Vec::<FnParams>::new();
   while token_iter.peek() != None {
     match token_iter.peek().unwrap() {
       Token::RParentheses => {
         token_iter.next();
         break;
       },
-      _ => args.push(parse_fn_arg(token_iter)),
+      _ => args.push(parse_fn_params(token_iter)),
     }
   }
   // TODO: コロンじゃなくて、-> であるべき
@@ -119,7 +173,7 @@ fn parse_fn_signature(token_iter: &mut core::iter::Peekable<impl Iterator<Item=T
   }
 }
 
-fn parse_fn_arg(token_iter: &mut core::iter::Peekable<impl Iterator<Item=Token>>) -> FnArg {
+fn parse_fn_params(token_iter: &mut core::iter::Peekable<impl Iterator<Item=Token>>) -> FnParams {
   let name = match token_iter.next().unwrap() {
     Token::Identifier(name) => name,
     _ => panic!("Expected argument name"),
@@ -135,7 +189,7 @@ fn parse_fn_arg(token_iter: &mut core::iter::Peekable<impl Iterator<Item=Token>>
   if let Some(Token::Comma) = token_iter.peek() {
     token_iter.next();
   }
-  FnArg {
+  FnParams {
     name,
     arg_type,
   }
@@ -155,7 +209,8 @@ struct ItemFn {
 
 #[derive(Debug)]
 enum Statement {
-  Local(Local)
+  Local(Local),
+  FnCall(FnCall),
 }
 
 #[derive(Debug)]
@@ -163,6 +218,12 @@ struct Local {
   name: String,
   var_type: String,
   value: Expr,
+}
+
+#[derive(Debug)]
+struct FnCall {
+  name: String,
+  args: Vec<Expr>,
 }
 
 #[derive(Debug)]
@@ -179,12 +240,12 @@ enum Expr {
 #[derive(Debug)]
 struct FnSignature {
   ident: String,
-  args: Vec<FnArg>,
+  args: Vec<FnParams>,
   output: Option<String>,
 }
 
 #[derive(Debug)]
-struct FnArg {
+struct FnParams {
   name: String,
   arg_type: String,
 }

@@ -19,3 +19,14 @@ TODO: やることリスト
 
 * 決めること
 * eBNFでASTの形を決める
+
+ASTの実装はできた。
+やりたいのは、
+* ASTからのtype inference
+* desugaring、macro expansion
+* control flow graphの解析
+* コード生成
+* レジスタ割り当て
+* 各種最適化
+
+とりあえず動かしたいので、コード生成からやる

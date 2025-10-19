@@ -1,6 +1,6 @@
 #[derive(Debug, PartialEq)]
 pub enum Token<> {
-  RBrace(),
+  RBrace,
   LBrace,
   RParentheses,
   LParentheses,

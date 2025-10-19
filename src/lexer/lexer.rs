@@ -9,7 +9,7 @@ pub fn to_token_stream(token_chunks: Vec<String>) -> Vec<Token> {
     match chunk.as_str() {
       " " => continue,
       "{" => tokens.push(Token::LBrace),
-      "}" => tokens.push(Token::RBrace()),
+      "}" => tokens.push(Token::RBrace),
       "(" => tokens.push(Token::LParentheses),
       ")" => tokens.push(Token::RParentheses),
       "[" => tokens.push(Token::LBracket),
@@ -28,5 +28,35 @@ pub fn to_token_stream(token_chunks: Vec<String>) -> Vec<Token> {
     }
   } 
   tokens
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::lexer::tokenizer;
+    use crate::lexer::token::{Token, Type};
+    use super::*;
+
+    #[test]
+    fn test_lex() {
+    let source = "fn main() { let x: i32 = 10; }";
+    let chunks = tokenizer::to_token_chunks(source);
+    let tokens = to_token_stream(chunks);
+    let expected_tokens = vec![
+        Token::Fn,
+        Token::Identifier("main".to_string()),
+        Token::LParentheses,
+        Token::RParentheses,
+        Token::LBrace,
+        Token::Let,
+        Token::Identifier("x".to_string()),
+        Token::Collon,
+        Token::Type(Type::I32),
+        Token::Identifier("=".to_string()),
+        Token::Identifier("10".to_string()),
+        Token::Semicolon,
+        Token::RBrace,
+    ];
+    assert_eq!(tokens, expected_tokens);
+  }
 }
 

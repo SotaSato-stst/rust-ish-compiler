@@ -1,6 +1,7 @@
 mod parser;
 mod libs;
 mod ast;
+mod code_gen;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -8,10 +9,29 @@ fn main() {
         eprintln!("Usage: {} <source_file>", args[0]);
         std::process::exit(1);
     }
+    let output_filename = "output.asm";
 
     let filename = &args[1];
     let source_code = libs::readfile(filename);
-    parser::parser::parse(&source_code);
+    let asm_code = compile_source(&source_code);
+    output_asm_file(&asm_code, output_filename);
+}
+
+fn compile_source(source_code: &String) -> code_gen::code_gen::AsmCode {
+    let program = parser::parser::parse(source_code);
+    let code = code_gen::code_gen::generate_code(&program);
+    println!("Generated Assembly Code: {:?}", code.serialize());
+    output_asm_file(&code, "./misc/output.asm");
+    code
+}
+
+fn output_asm_file(asm_code: &code_gen::code_gen::AsmCode, output_filename: &str) {
+    use std::fs::File;
+    use std::io::Write;
+
+    let mut file = File::create(output_filename).expect("Could not create output file");
+    let asm_string = asm_code.serialize();
+    file.write_all(asm_string.as_bytes()).expect("Could not write to output file");
 }
 
 #[cfg(test)]
@@ -23,7 +43,6 @@ pub mod tests {
     fn for_test() {
         let filename = "./src/parser/test/sample.txt";
         let source_code = libs::readfile(filename);
-        let ast = parser::parser::parse(&source_code);
-        println!("ast: {:?}", ast);
+        let _code = compile_source(&source_code);
     }
 }

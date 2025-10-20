@@ -31,7 +31,11 @@ fn output_asm_file(asm_code: &code_gen::code_gen::AsmCode, output_filename: &str
 
     let mut file = File::create(output_filename).expect("Could not create output file");
     let asm_string = asm_code.serialize();
-    file.write_all(asm_string.as_bytes()).expect("Could not write to output file");
+    let mut writer = std::io::BufWriter::new(&mut file);
+    for line in asm_string {
+        writeln!(writer, "{}", line).expect("Could not write to output file");
+    }
+    writer.flush().expect("Could not flush output file");
 }
 
 #[cfg(test)]

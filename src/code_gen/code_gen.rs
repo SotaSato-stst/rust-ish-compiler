@@ -50,7 +50,7 @@ fn handle_fn(asm_code: &mut AsmCode, item_fn: &ItemFn) {
                                 });
                                 data_directives.push(DataDirective::EQUE {
                                     left: msg_len.to_string(),
-                                    right: vec!["$ - msg_len".to_string()],
+                                    right: vec!["$ - msg".to_string()],
                                 });
                                 instructions.push(Instruction::SYSCALL);
                                 handle_exit(&mut instructions);
@@ -92,49 +92,24 @@ pub struct AsmCode {
 impl AsmCode {
     fn new() -> Self {
         AsmCode {
-            directives: vec![".global _main".to_string(), "default rel".to_string()],
+            directives: vec!["global _main".to_string(), "default rel".to_string()],
             text_sec: Vec::<FnCode>::new(),
             data_sec: Vec::<DataDirective>::new(),
         }
     }
 
-    pub fn serialize(&self) -> String {
-        let mut asm_string = String::new();
-        for directive in &self.directives {
-            asm_string.push_str(&format!("{}\n", directive));
+    pub fn serialize(&self) -> Vec<String> {
+        let mut asm_lines = Vec::<String>::new();
+        asm_lines.extend(self.directives.clone());
+        asm_lines.push("section .data".to_string());
+        for data_dir in &self.data_sec {
+            asm_lines.extend(data_dir.serialize());
         }
-        asm_string.push_str("\n.section .text\n");
+        asm_lines.push("section .text".to_string());
         for fn_code in &self.text_sec {
-            asm_string.push_str(&format!("{}:\n", fn_code.label));
-            for instruction in &fn_code.instructions {
-                match instruction {
-                    Instruction::MOVE { dest, src } => {
-                        asm_string.push_str(&format!("    mov {}, {}\n", dest, src));
-                    },
-                    Instruction::LOAD { dest, addr } => {
-                        asm_string.push_str(&format!("    lea {}, [{}]\n", dest, addr));
-                    },
-                    Instruction::SYSCALL => {
-                        asm_string.push_str("    syscall\n");
-                    },
-                    Instruction::XOR { src1, src2 } => {
-                        asm_string.push_str(&format!("    xor {}, {}\n", src1, src2));
-                    },
-                }
-            }
+            asm_lines.extend(fn_code.serialize());
         }
-        asm_string.push_str("\n.section .data\n");
-        for data_directive in &self.data_sec {
-            match data_directive {
-                DataDirective::DB { left, right } => {
-                    asm_string.push_str(&format!("{}: db {}\n", left, right.join(", ")));
-                },
-                DataDirective::EQUE { left, right } => {
-                    asm_string.push_str(&format!("{}: equ {}\n", left, right.join(" ")));
-                },
-            }
-        }
-        asm_string
+        asm_lines
     }
 }
 
@@ -144,10 +119,52 @@ enum DataDirective {
     EQUE { left: String, right: Vec<String> },
 }
 
+impl Serialize for DataDirective {
+    fn serialize(&self) -> Vec<String> {
+        match self {
+            DataDirective::DB { left, right } => {
+                let mut s = Vec::<String>::new(); 
+                for r in right {
+                    if r.starts_with("0x") {
+                        s.push(r.clone());
+                        continue;
+                    }
+                    s.push(format!("\"{}\"", r));
+                }
+                vec![format!("    {} db {}", left, s.join(", "))]
+            },
+            DataDirective::EQUE { left, right } => {
+                vec![format!("    {} equ {}", left, right.join(" "))]
+            },
+        }
+    }
+}
+
 #[derive(Debug)]
 struct FnCode {
     label: String,
     instructions: Vec<Instruction>,
+}
+
+impl Serialize for FnCode {
+    fn serialize(&self) -> Vec<String> {
+        let mut lines = Vec::<String>::new();
+        lines.push(format!("{}:", self.label));
+        for instr in &self.instructions {
+            lines.extend(instr.serialize());
+        }
+        lines
+    }
+}
+
+impl Serialize for AsmCode {
+    fn serialize(&self) -> Vec<String> {
+        self.serialize()
+    }
+}
+
+trait Serialize {
+    fn serialize(&self) -> Vec<String>;
 }
 
 #[derive(Debug)]
@@ -156,6 +173,17 @@ enum Instruction {
     LOAD { dest: String, addr: String },
     SYSCALL,
     XOR { src1: String, src2: String },
+}
+
+impl Serialize for Instruction {
+    fn serialize(&self) -> Vec<String> {
+        match self {
+            Instruction::MOVE { dest, src } => vec![format!("    mov {}, {}", dest, src)],
+            Instruction::LOAD { dest, addr } => vec![format!("    lea {}, [{}]", dest, addr)],
+            Instruction::SYSCALL => vec!["    syscall".to_string()],
+            Instruction::XOR { src1, src2 } => vec![format!("    xor {}, {}", src1, src2)],
+        }
+    }
 }
 
 fn convert_to_asm_fn_name(fn_name: &String) -> String {

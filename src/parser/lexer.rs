@@ -29,7 +29,19 @@ pub fn to_token_stream(token_chunks: Vec<String>) -> Vec<Token> {
       "i32" => tokens.push(Token::Type(Type::I32)),
       "f64" => tokens.push(Token::Type(Type::F64)),
       "return" => tokens.push(Token::Return),
-      _ => tokens.push(Token::Identifier(chunk)),
+      other => {
+        if other.starts_with("\"") && other.ends_with("\"") {
+          let literal_content = other.trim_matches('"').to_string();
+          tokens.push(Token::Literal(literal_content));
+        } else if other.chars().all(|c| c.is_digit(10)) || 
+                  (other.starts_with("0x") && other[2..].chars().all(|c| c.is_digit(16))) {
+          tokens.push(Token::Literal(other.to_string()));
+        } else {
+          match other {
+            _ => tokens.push(Token::Identifier(other.to_string())),
+        }
+        }
+      }
     }
   } 
   tokens
@@ -57,7 +69,7 @@ mod tests {
         Token::Collon,
         Token::Type(Type::I32),
         Token::Identifier("=".to_string()),
-        Token::Identifier("10".to_string()),
+        Token::Literal("10".to_string()),
         Token::Semicolon,
         Token::RBrace,
     ];

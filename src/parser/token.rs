@@ -14,6 +14,7 @@ pub enum Token<> {
   Comma,
   Identifier(String),
   Let,
+  Literal(String),
   Const,
   Type(Type),
   Operator(Operator),

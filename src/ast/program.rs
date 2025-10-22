@@ -16,6 +16,7 @@ pub struct ItemFn {
 pub enum Statement {
   Local(Local),
   FnCall(FnCall),
+  Return(Expr),
 }
 
 #[derive(Debug)]
@@ -40,6 +41,7 @@ pub enum Expr {
     right: Box<Expr>,
   },
   ExprVariable(String),
+  ExprFnCall(FnCall),
 }
 
 #[derive(Debug)]

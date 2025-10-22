@@ -1,6 +1,6 @@
-use crate::ast::program::{Expr, Item, ItemFn, Program, Statement};
-use super::syscall::*;
 use super::rst::*;
+use super::syscall::*;
+use crate::ast::program::{Expr, Item, ItemFn, Program, Statement};
 
 pub fn generate_code(program: &Program) -> AsmCode {
     let mut asm_code = AsmCode::new();
@@ -8,7 +8,7 @@ pub fn generate_code(program: &Program) -> AsmCode {
         match item {
             Item::ItemFn(item_fn) => {
                 handle_fn(&mut asm_code, item_fn);
-            },
+            }
             _ => { /* Handle other item types if necessary */ }
         }
     }
@@ -19,7 +19,6 @@ fn handle_fn(asm_code: &mut AsmCode, item_fn: &ItemFn) {
     let mut instructions = Vec::<Instruction>::new();
     let mut data_directives = Vec::<DataDirective>::new();
     item_fn.block.iter().for_each(|stmt| {
-
         match stmt {
             Statement::FnCall(fn_call) => {
                 if fn_call.name == "println!" {
@@ -54,12 +53,12 @@ fn handle_fn(asm_code: &mut AsmCode, item_fn: &ItemFn) {
                                 });
                                 instructions.push(Instruction::SYSCALL);
                                 handle_exit(&mut instructions);
-                            },
+                            }
                             _ => { /* Handle other expression types if necessary */ }
                         }
                     }
                 }
-            },
+            }
             _ => { /* Handle other statement types if necessary */ }
         }
     });
@@ -123,7 +122,7 @@ impl Serialize for DataDirective {
     fn serialize(&self) -> Vec<String> {
         match self {
             DataDirective::DB { left, right } => {
-                let mut s = Vec::<String>::new(); 
+                let mut s = Vec::<String>::new();
                 for r in right {
                     if r.starts_with("0x") {
                         s.push(r.clone());
@@ -132,10 +131,10 @@ impl Serialize for DataDirective {
                     s.push(format!("\"{}\"", r));
                 }
                 vec![format!("    {} db {}", left, s.join(", "))]
-            },
+            }
             DataDirective::EQUE { left, right } => {
                 vec![format!("    {} equ {}", left, right.join(" "))]
-            },
+            }
         }
     }
 }

@@ -1,7 +1,7 @@
-pub mod parser;
-mod libs;
 mod ast;
 mod code_gen;
+mod libs;
+pub mod parser;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();

@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Token<> {
   RBrace,
   LBrace,
@@ -15,10 +15,20 @@ pub enum Token<> {
   Identifier(String),
   Let,
   Const,
-  Type(Type)
+  Type(Type),
+  Operator(Operator),
+  Return
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
+pub enum Operator {
+  Plus,
+  Minus,
+  Asterisk,
+  Slash,
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub enum Type {
   I32,
   F64,

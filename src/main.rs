@@ -1,4 +1,4 @@
-mod parser;
+pub mod parser;
 mod libs;
 mod ast;
 mod code_gen;

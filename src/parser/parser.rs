@@ -1,7 +1,7 @@
 use super::lexer;
 use super::token::Token;
 use super::chunker;
-use crate::ast::program::{Program, Item, ItemFn, FnSignature, FnParams, Statement, Local, FnCall, Expr};
+use crate::{ast::program::{Expr, FnCall, FnParams, FnSignature, Item, ItemFn, Local, Program, Statement}, parser::token::Operator};
 
 pub fn parse(source_code: &String) -> Program {
   let chunks = chunker::to_token_chunks(source_code);
@@ -119,22 +119,21 @@ fn parse_let_statement(token_iter: &mut core::iter::Peekable<impl Iterator<Item=
         Token::Identifier(name) => name,
         _ => panic!("Expected identifier"),
       };
-      match token_iter.next().unwrap() {
-        Token::Collon => (),
-        _ => panic!("Expected ':'"),
-      };
-      let var_type = match token_iter.next().unwrap() {
-        Token::Type(t) => format!("{:?}", t),
-        _ => panic!("Expected type"),
-      };
+      let mut var_type = String::new();
+
+      if token_iter.peek().unwrap() == &Token::Collon {
+          token_iter.next();
+          var_type = match token_iter.next().unwrap() {
+            Token::Type(t) => format!("{:?}", t),
+            _ => panic!("Expected type"),
+        };
+      }
       match token_iter.next().unwrap() {
         Token::Identifier(op) if op == "=" => (),
         _ => panic!("Expected '='"),
       };
-      let value = match token_iter.next().unwrap() {
-        Token::Identifier(lit) => Expr::ExprLit(lit),
-        _ => panic!("Expected literal"),
-      };
+      let expr = parse_expr(token_iter);
+
       match token_iter.next().unwrap() {
         Token::Semicolon => (),
         _ => panic!("Expected ';'"),
@@ -142,8 +141,37 @@ fn parse_let_statement(token_iter: &mut core::iter::Peekable<impl Iterator<Item=
       Statement::Local(Local {
         name,
         var_type,
-        value,
+        value: expr,
       })
+}
+
+fn parse_expr(token_iter: &mut core::iter::Peekable<impl Iterator<Item=Token>>) -> Expr {
+    let _next_token = token_iter.next().unwrap();
+    let _next_next_token = token_iter.peek().unwrap().clone();
+    if _next_next_token == Token::Semicolon {
+        return match _next_token {
+            Token::Identifier(lit) => Expr::ExprLit(lit),
+            _ => panic!("Expected literal"),
+        };
+    }
+
+    let left = match _next_token {
+        Token::Identifier(lit) => Expr::ExprLit(lit),
+        _ => panic!("Expected literal"),
+    };
+    let op = match token_iter.next().unwrap() {
+        Token::Operator(op) => op,
+        _ => panic!("Expected operator"),
+    };
+    let right = match token_iter.next().unwrap() {
+        Token::Identifier(lit) => Expr::ExprLit(lit),
+        _ => panic!("Expected literal"),
+    };
+    Expr::ExprBinaryOp {
+        left: Box::new(left),
+        op: op,
+        right: Box::new(right),
+    }
 }
 
 fn parse_fn_signature(token_iter: &mut core::iter::Peekable<impl Iterator<Item=Token>>) -> FnSignature {
@@ -253,6 +281,51 @@ mod tests {
                         name: "x".to_string(),
                         var_type: "I32".to_string(),
                         value: Expr::ExprLit("10".to_string()),
+                    }),
+                ],
+            }),
+        ],
+    };
+    assert_eq!(format!("{:?}", ast), format!("{:?}", expected_ast));
+  }
+
+    #[test]
+    fn test_parse_exp() {
+    let tokens = vec![
+        Token::Fn,
+        Token::Identifier("main".to_string()),
+        Token::LParentheses,
+        Token::RParentheses,
+        Token::LBrace,
+        Token::Let,
+        Token::Identifier("x".to_string()),
+        Token::Collon,
+        Token::Type(Type::I32),
+        Token::Identifier("=".to_string()),
+        Token::Identifier("10".to_string()),
+        Token::Operator(Operator::Plus),
+        Token::Identifier("20".to_string()),
+        Token::Semicolon,
+        Token::RBrace,
+    ];
+    let ast = parse_to_program(tokens);
+    let expected_ast = Program {
+        items: vec![
+            Item::ItemFn(ItemFn {
+                signature: FnSignature {
+                    ident: "main".to_string(),
+                    args: vec![],
+                    output: None,
+                },
+                block: vec![
+                    Statement::Local(Local {
+                        name: "x".to_string(),
+                        var_type: "I32".to_string(),
+                        value: Expr::ExprBinaryOp {
+                            left: Box::new(Expr::ExprLit("10".to_string())),
+                            op: Operator::Plus,
+                            right: Box::new(Expr::ExprLit("20".to_string())),
+                        },
                     }),
                 ],
             }),

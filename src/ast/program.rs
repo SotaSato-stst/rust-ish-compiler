@@ -1,3 +1,4 @@
+use crate::parser::token::{Operator};
 
 #[derive(Debug)]
 pub enum Item {
@@ -35,7 +36,7 @@ pub enum Expr {
   ExprLit(String),
   ExprBinaryOp {
     left: Box<Expr>,
-    op: String,
+    op: Operator,
     right: Box<Expr>,
   },
   ExprVariable(String),

@@ -19,11 +19,16 @@ pub fn to_token_stream(token_chunks: Vec<String>) -> Vec<Token> {
       ":" => tokens.push(Token::Collon),
       ";" => tokens.push(Token::Semicolon),
       "," => tokens.push(Token::Comma),
+      "+" => tokens.push(Token::Operator(Operator::Plus)),
+      "-" => tokens.push(Token::Operator(Operator::Minus)),
+      "*" => tokens.push(Token::Operator(Operator::Asterisk)),
+      "/" => tokens.push(Token::Operator(Operator::Slash)),
       "fn" => tokens.push(Token::Fn),
       "let" => tokens.push(Token::Let),
       "const" => tokens.push(Token::Const),
       "i32" => tokens.push(Token::Type(Type::I32)),
       "f64" => tokens.push(Token::Type(Type::F64)),
+      "return" => tokens.push(Token::Return),
       _ => tokens.push(Token::Identifier(chunk)),
     }
   } 

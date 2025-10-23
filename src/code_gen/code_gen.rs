@@ -59,6 +59,9 @@ fn handle_fn(asm_code: &mut AsmCode, item_fn: &ItemFn) {
                     }
                 }
             }
+            Statement::Return(_) => {
+                handle_exit(&mut instructions);
+            }
             _ => { /* Handle other statement types if necessary */ }
         }
     });

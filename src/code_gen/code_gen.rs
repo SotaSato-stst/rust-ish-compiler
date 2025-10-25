@@ -59,6 +59,18 @@ fn handle_fn(asm_code: &mut AsmCode, item_fn: &ItemFn) {
                     }
                 }
             }
+            Statement::Local(local) => {
+                match &local.value {
+                    Expr::ExprLit(lit) => {
+                        let var_label = format!("var_{}", local.name);
+                        data_directives.push(DataDirective::DB {
+                            left: var_label.clone(),
+                            right: vec![lit.clone()],
+                        });
+                    }
+                    _ => { /* Handle other expression types if necessary */ }
+                }
+            }
             Statement::Return(_) => {
                 handle_exit(&mut instructions);
             }

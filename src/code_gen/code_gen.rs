@@ -39,17 +39,20 @@ impl RstManagerInFn {
         }
         RstManagerInFn {
             val_register_map: val_register_map,
-            rsts_for_general: vec![
-                Rst::R10,
-                Rst::R11,
-                Rst::R12,
-                Rst::R13,
-                Rst::R14,
-                Rst::R15,
-            ],
-            rsts_for_arguments: vec![Rst::RDI, Rst::RSI, Rst::RDX, Rst::RCX, Rst::R8, Rst::R9],
-            rsts_for_return: vec![Rst::RAX, Rst::RDX],
+            rsts_for_general: vec![Rst::R10, Rst::R11, Rst::R12, Rst::R13, Rst::R14, Rst::R15]
+                .into_iter()
+                .rev()
+                .collect(),
+            rsts_for_arguments: vec![Rst::RDI, Rst::RSI, Rst::RDX, Rst::RCX, Rst::R8, Rst::R9]
+                .into_iter()
+                .rev()
+                .collect(),
+            rsts_for_return: vec![Rst::RAX, Rst::RDX].into_iter().rev().collect(),
         }
+    }
+
+    fn get_rst_from_map(&self, name: String) -> Rst {
+        *self.val_register_map.get(&name).unwrap()
     }
 
     fn pop_general_rsts(&mut self, name: String) -> Rst {
@@ -58,8 +61,22 @@ impl RstManagerInFn {
         gst
     }
 
+    fn init_general_rsts(&mut self) {
+        self.rsts_for_general = vec![Rst::R10, Rst::R11, Rst::R12, Rst::R13, Rst::R14, Rst::R15]
+            .into_iter()
+            .rev()
+            .collect();
+    }
+
     fn pop_argument_rsts(&mut self) -> Rst {
         self.rsts_for_arguments.pop().unwrap()
+    }
+
+    fn init_argument_rsts(&mut self) {
+        self.rsts_for_arguments = vec![Rst::RDI, Rst::RSI, Rst::RDX, Rst::RCX, Rst::R8, Rst::R9]
+            .into_iter()
+            .rev()
+            .collect();
     }
 
     fn pop_return_rsts(&mut self) -> Rst {
@@ -67,7 +84,7 @@ impl RstManagerInFn {
     }
 
     fn init_return_rsts(&mut self) {
-        self.rsts_for_return = vec![Rst::RAX, Rst::RDX];
+        self.rsts_for_return = vec![Rst::RAX, Rst::RDX].into_iter().rev().collect();
     }
 }
 
@@ -78,7 +95,12 @@ fn handle_fn(asm_code: &mut AsmCode, item_fn: &ItemFn) {
     item_fn.block.iter().for_each(|stmt| {
         match stmt {
             Statement::FnCall(fn_call) => {
-                handle_fn_call(&mut instructions, fn_call, &mut rgt_manager, &mut data_directives);
+                handle_fn_call(
+                    &mut instructions,
+                    fn_call,
+                    &mut rgt_manager,
+                    &mut data_directives,
+                );
             }
             Statement::Local(local) => {
                 let rst = handle_experession(&mut instructions, &local.value, &mut rgt_manager);
@@ -121,7 +143,7 @@ fn handle_experession(
             rst
         }
         Expr::ExprVariable(var_name) => {
-            let rst = rst_manager.pop_general_rsts(var_name.clone());
+            let rst = rst_manager.get_rst_from_map(var_name.clone());
             rst
         }
         Expr::ExprFnCall(fn_call) => {
@@ -163,8 +185,8 @@ fn handle_fn_call(
     fn_call: &crate::ast::program::FnCall,
     rst_manager: &mut RstManagerInFn,
     data_directives: &mut Vec<DataDirective>,
-)  {
-   if fn_call.name == "println!" {
+) {
+    if fn_call.name == "println!" {
         handle_println(instructions, fn_call, data_directives)
     }
     for arg in fn_call.args.iter() {
@@ -176,7 +198,11 @@ fn handle_fn_call(
                 });
             }
             Expr::ExprVariable(var_name) => {
-                let rst = rst_manager.val_register_map.get(var_name).unwrap().to_string();
+                let rst = rst_manager
+                    .val_register_map
+                    .get(var_name)
+                    .unwrap()
+                    .to_string();
                 instructions.push(Instruction::MOVE {
                     dest: rst_manager.pop_argument_rsts().to_string(),
                     src: rst,
@@ -187,17 +213,17 @@ fn handle_fn_call(
                 unimplemented!()
             }
         };
-
-    };
+    }
+    rst_manager.init_argument_rsts();
     instructions.push(Instruction::CALL {
         func: convert_to_asm_fn_name(&fn_call.name),
     });
 }
 
-fn handle_println (
+fn handle_println(
     instructions: &mut Vec<Instruction>,
     fn_call: &crate::ast::program::FnCall,
-    data_directives: &mut Vec<DataDirective>
+    data_directives: &mut Vec<DataDirective>,
 ) {
     if let Some(arg) = fn_call.args.get(0) {
         match arg {
@@ -234,7 +260,6 @@ fn handle_println (
         }
     }
 }
-
 
 fn handle_exit(instructions: &mut Vec<Instruction>) {
     instructions.push(Instruction::MOVE {

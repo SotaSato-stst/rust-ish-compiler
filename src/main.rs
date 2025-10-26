@@ -19,6 +19,7 @@ fn main() {
 
 fn compile_source(source_code: &String) -> code_gen::code_gen::AsmCode {
     let program = parser::parser::parse(source_code);
+    println!("Parsed AST: {:?}", program);
     let code = code_gen::code_gen::generate_code(&program);
     println!("Generated Assembly Code: {:?}", code.serialize());
     output_asm_file(&code, "./misc/output.asm");

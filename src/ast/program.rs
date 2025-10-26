@@ -1,4 +1,4 @@
-use crate::parser::token::Operator;
+pub use crate::parser::token::Operator;
 
 #[derive(Debug)]
 pub enum Item {

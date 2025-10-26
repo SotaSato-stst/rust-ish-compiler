@@ -9,7 +9,7 @@ section .data
 
 section .text
 _main:
-    mov rdi, 1
+    mov rdi , 1
     mov rsi, 2
     call sum
     add al, '0'

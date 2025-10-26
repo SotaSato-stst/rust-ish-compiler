@@ -1,3 +1,5 @@
+use std::ptr::write_bytes;
+
 use super::chunker;
 use super::lexer;
 use super::token::Token;

@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy)] // 必要に応じてトレイトを導出
+#[derive(Debug, Clone, Copy)]
 pub enum Rst {
     RAX,
     RDX,

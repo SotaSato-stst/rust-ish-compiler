@@ -61,13 +61,6 @@ impl RstManagerInFn {
         gst
     }
 
-    fn init_general_rsts(&mut self) {
-        self.rsts_for_general = vec![Rst::R10, Rst::R11, Rst::R12, Rst::R13, Rst::R14, Rst::R15]
-            .into_iter()
-            .rev()
-            .collect();
-    }
-
     fn pop_argument_rsts(&mut self) -> Rst {
         self.rsts_for_arguments.pop().unwrap()
     }
@@ -115,7 +108,6 @@ fn handle_fn(asm_code: &mut AsmCode, item_fn: &ItemFn) {
                 instructions.push(Instruction::RET);
                 rgt_manager.init_return_rsts();
             }
-            _ => { /* Handle other statement types if necessary */ }
         }
     });
     if item_fn.signature.ident == "main" {
@@ -172,10 +164,6 @@ fn handle_experession(
                     unimplemented!()
                 }
             }
-        }
-        _ => {
-            // Handle other expression types if necessary
-            unimplemented!()
         }
     }
 }

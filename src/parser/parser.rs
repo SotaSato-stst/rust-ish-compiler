@@ -1,5 +1,3 @@
-use std::ptr::write_bytes;
-
 use super::chunker;
 use super::lexer;
 use super::token::Token;
@@ -297,7 +295,7 @@ mod tests {
             Token::Collon,
             Token::Type(Type::I32),
             Token::Identifier("=".to_string()),
-            Token::Identifier("10".to_string()),
+            Token::Literal("10".to_string()),
             Token::Semicolon,
             Token::RBrace,
         ];
@@ -332,9 +330,9 @@ mod tests {
             Token::Collon,
             Token::Type(Type::I32),
             Token::Identifier("=".to_string()),
-            Token::Identifier("10".to_string()),
+            Token::Literal("10".to_string()),
             Token::Operator(Operator::Plus),
-            Token::Identifier("20".to_string()),
+            Token::Literal("20".to_string()),
             Token::Semicolon,
             Token::RBrace,
         ];

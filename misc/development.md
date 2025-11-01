@@ -36,3 +36,5 @@ serializeは、各structにやらしたいところではある
 先にSSA対応した方が、やりやすい可能性はある(後でSSA対応をして恩恵を感じるのも良さそう)
 parseからやる
 次はcode generation
+
+intrisicなfunctionの生成をやる
